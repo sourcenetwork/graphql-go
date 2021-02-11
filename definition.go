@@ -410,8 +410,18 @@ func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	if fieldName == "" || fieldConfig == nil {
 		return
 	}
-	if fields, ok := gt.typeConfig.Fields.(Fields); ok {
+	switch fields := gt.typeConfig.Fields.(type) {
+	case Fields:
 		fields[fieldName] = fieldConfig
+		gt.initialisedFields = false
+	case FieldsThunk:
+		// if the fields are defined as a thunk when the object is created
+		// then wrap the thunk in another thunk.
+		gt.typeConfig.Fields = (FieldsThunk)(func() Fields {
+			newFields := fields()
+			newFields[fieldName] = fieldConfig
+			return newFields
+		})
 		gt.initialisedFields = false
 	}
 }
