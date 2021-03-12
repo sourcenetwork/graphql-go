@@ -113,6 +113,10 @@ func parseName(parser *Parser) (*ast.Name, error) {
 	}), nil
 }
 
+func MakeParser(s *source.Source, opts ParseOptions) (*Parser, error) {
+	return makeParser(s, opts)
+}
+
 func makeParser(s *source.Source, opts ParseOptions) (*Parser, error) {
 	lexToken := lexer.Lex(s)
 	token, err := lexToken(0)
@@ -666,6 +670,10 @@ func parseList(parser *Parser, isConst bool) (*ast.ListValue, error) {
 		Values: values,
 		Loc:    loc(parser, start),
 	}), nil
+}
+
+func ParseObject(parser *Parser, isConst bool) (*ast.ObjectValue, error) {
+	return parseObject(parser, isConst)
 }
 
 /**

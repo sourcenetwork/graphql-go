@@ -297,12 +297,15 @@ func executeSubFields(p executeFieldsParams) map[string]interface{} {
 	finalResults := make(map[string]interface{}, len(p.Fields))
 	for responseName, fieldASTs := range p.Fields {
 		fieldPath := p.Path.WithKey(responseName)
+		// fmt.Println(fieldPath)
 		resolved, state := resolveField(p.ExecutionContext, p.ParentType, p.Source, fieldASTs, fieldPath)
 		if state.hasNoFieldDefs {
 			continue
 		}
 		finalResults[responseName] = resolved
 	}
+
+	// fmt.Println(finalResults)
 
 	return finalResults
 }
