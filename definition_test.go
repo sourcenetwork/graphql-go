@@ -603,7 +603,7 @@ func TestTypeSystem_DefinitionExample_IncludesFieldsThunk(t *testing.T) {
 	var someObject *graphql.Object
 	someObject = graphql.NewObject(graphql.ObjectConfig{
 		Name: "SomeObject",
-		Fields: (graphql.FieldsThunk)(func() graphql.Fields {
+		Fields: (graphql.FieldsThunk)(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"f": &graphql.Field{
 					Type: graphql.Int,
@@ -611,7 +611,7 @@ func TestTypeSystem_DefinitionExample_IncludesFieldsThunk(t *testing.T) {
 				"s": &graphql.Field{
 					Type: someObject,
 				},
-			}
+			}, nil
 		}),
 	})
 	fieldMap := someObject.Fields()
@@ -623,7 +623,7 @@ func TestTypeSystem_DefinitionExample_IncludesFieldsThunk(t *testing.T) {
 func TestTypeSystem_DefinitionExampe_AllowsCyclicFieldTypes(t *testing.T) {
 	personType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Person",
-		Fields: (graphql.FieldsThunk)(func() graphql.Fields {
+		Fields: (graphql.FieldsThunk)(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"name": &graphql.Field{
 					Type: graphql.String,
@@ -631,7 +631,7 @@ func TestTypeSystem_DefinitionExampe_AllowsCyclicFieldTypes(t *testing.T) {
 				"bestFriend": &graphql.Field{
 					Type: personType,
 				},
-			}
+			}, nil
 		}),
 	})
 

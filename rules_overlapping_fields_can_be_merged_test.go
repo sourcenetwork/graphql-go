@@ -408,7 +408,7 @@ func init() {
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			return stringBoxObject
 		},
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
+		Fields: graphql.FieldsThunk(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"deepBox": &graphql.Field{
 					Type: someBoxInterface,
@@ -416,7 +416,7 @@ func init() {
 				"unrelatedField": &graphql.Field{
 					Type: graphql.String,
 				},
-			}
+			}, nil
 		}),
 	})
 	stringBoxObject = graphql.NewObject(graphql.ObjectConfig{
@@ -424,7 +424,7 @@ func init() {
 		Interfaces: (graphql.InterfacesThunk)(func() []*graphql.Interface {
 			return []*graphql.Interface{someBoxInterface}
 		}),
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
+		Fields: graphql.FieldsThunk(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"scalar": &graphql.Field{
 					Type: graphql.String,
@@ -444,7 +444,7 @@ func init() {
 				"intBox": &graphql.Field{
 					Type: intBoxObject,
 				},
-			}
+			}, nil
 		}),
 	})
 	intBoxObject = graphql.NewObject(graphql.ObjectConfig{
@@ -452,7 +452,7 @@ func init() {
 		Interfaces: (graphql.InterfacesThunk)(func() []*graphql.Interface {
 			return []*graphql.Interface{someBoxInterface}
 		}),
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
+		Fields: graphql.FieldsThunk(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"scalar": &graphql.Field{
 					Type: graphql.Int,
@@ -472,7 +472,7 @@ func init() {
 				"intBox": &graphql.Field{
 					Type: intBoxObject,
 				},
-			}
+			}, nil
 		}),
 	})
 	var nonNullStringBox1Interface = graphql.NewInterface(graphql.InterfaceConfig{

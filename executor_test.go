@@ -2146,8 +2146,8 @@ func testErrors(t *testing.T, nameType graphql.Output, extensions map[string]int
 
 	heroType := graphql.NewObject(graphql.ObjectConfig{
 		Name: "Hero",
-		Fields: graphql.FieldsThunk(func() graphql.Fields {
-			return heroFields
+		Fields: graphql.FieldsThunk(func() (graphql.Fields, error) {
+			return heroFields, nil
 		}),
 	})
 

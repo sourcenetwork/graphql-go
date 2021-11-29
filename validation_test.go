@@ -1388,24 +1388,24 @@ func TestTypeSystem_ObjectsMustAdhereToInterfaceTheyImplement_AcceptsAnObjectWit
 		ResolveType: func(p graphql.ResolveTypeParams) *graphql.Object {
 			return nil
 		},
-		Fields: (graphql.FieldsThunk)(func() graphql.Fields {
+		Fields: (graphql.FieldsThunk)(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"field": &graphql.Field{
 					Type: anotherInterface,
 				},
-			}
+			}, nil
 		}),
 	})
 	var anotherObject *graphql.Object
 	anotherObject = graphql.NewObject(graphql.ObjectConfig{
 		Name:       "AnotherObject",
 		Interfaces: []*graphql.Interface{anotherInterface},
-		Fields: (graphql.FieldsThunk)(func() graphql.Fields {
+		Fields: (graphql.FieldsThunk)(func() (graphql.Fields, error) {
 			return graphql.Fields{
 				"field": &graphql.Field{
 					Type: anotherObject,
 				},
-			}
+			}, nil
 		}),
 	})
 	_, err := schemaWithFieldType(anotherObject)

@@ -376,7 +376,7 @@ type ObjectConfig struct {
 	Description string      `json:"description"`
 }
 
-type FieldsThunk func() Fields
+type FieldsThunk func() (Fields, error)
 
 func NewObject(config ObjectConfig) *Object {
 	objectType := &Object{}
@@ -417,10 +417,11 @@ func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	case FieldsThunk:
 		// if the fields are defined as a thunk when the object is created
 		// then wrap the thunk in another thunk.
-		gt.typeConfig.Fields = (FieldsThunk)(func() Fields {
-			newFields := fields()
+		gt.typeConfig.Fields = (FieldsThunk)(func() (Fields, error) {
+			newFields, err := fields()
+			gt.err = err
 			newFields[fieldName] = fieldConfig
-			return newFields
+			return newFields, err
 		})
 		gt.initialisedFields = false
 	}
@@ -434,22 +435,36 @@ func (gt *Object) Description() string {
 func (gt *Object) String() string {
 	return gt.PrivateName
 }
+
 func (gt *Object) Fields() FieldDefinitionMap {
+	// We discard the returned error to preserve the orignal behaviour
+	// The error will still be added to the `gt.err` property
+	m, _ := gt.InitFields()
+	return m
+}
+
+func (gt *Object) InitFields() (FieldDefinitionMap, error) {
 	if gt.initialisedFields {
-		return gt.fields
+		return gt.fields, nil
 	}
 
 	var configureFields Fields
+	var err error
 	switch fields := gt.typeConfig.Fields.(type) {
 	case Fields:
 		configureFields = fields
 	case FieldsThunk:
-		configureFields = fields()
+		configureFields, err = fields()
+	}
+
+	if err != nil {
+		gt.err = err
+		return nil, err
 	}
 
 	gt.fields, gt.err = defineFieldMap(gt, configureFields)
 	gt.initialisedFields = true
-	return gt.fields
+	return gt.fields, nil
 }
 
 func (gt *Object) Interfaces() []*Interface {
@@ -753,21 +768,34 @@ func (it *Interface) Description() string {
 }
 
 func (it *Interface) Fields() (fields FieldDefinitionMap) {
+	// We discard the returned error to preserve the orignal behaviour
+	// The error will still be added to the `gt.err` property
+	m, _ := it.InitFields()
+	return m
+}
+
+func (it *Interface) InitFields() (FieldDefinitionMap, error) {
 	if it.initialisedFields {
-		return it.fields
+		return it.fields, nil
 	}
 
 	var configureFields Fields
+	var err error
 	switch fields := it.typeConfig.Fields.(type) {
 	case Fields:
 		configureFields = fields
 	case FieldsThunk:
-		configureFields = fields()
+		configureFields, err = fields()
+	}
+
+	if err != nil {
+		it.err = err
+		return nil, err
 	}
 
 	it.fields, it.err = defineFieldMap(it, configureFields)
 	it.initialisedFields = true
-	return it.fields
+	return it.fields, nil
 }
 
 func (it *Interface) String() string {
