@@ -1135,7 +1135,7 @@ func (st *InputObjectField) Error() error {
 
 type InputObjectConfigFieldMap map[string]*InputObjectFieldConfig
 type InputObjectFieldMap map[string]*InputObjectField
-type InputObjectConfigFieldMapThunk func() InputObjectConfigFieldMap
+type InputObjectConfigFieldMapThunk func() (InputObjectConfigFieldMap, error)
 type InputObjectConfig struct {
 	Name        string      `json:"name"`
 	Fields      interface{} `json:"fields"`
@@ -1163,7 +1163,11 @@ func (gt *InputObject) defineFieldMap() InputObjectFieldMap {
 	case InputObjectConfigFieldMap:
 		fieldMap = fields
 	case InputObjectConfigFieldMapThunk:
-		fieldMap = fields()
+		fieldMap, err = fields()
+		if err != nil {
+			gt.err = err
+			return InputObjectFieldMap{}
+		}
 	}
 	resultFieldMap := InputObjectFieldMap{}
 
