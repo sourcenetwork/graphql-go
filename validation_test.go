@@ -656,12 +656,12 @@ func TestTypeSystem_InputObjectsMustHaveFields_AcceptsAnInputObjectTypeWithField
 func TestTypeSystem_InputObjectsMustHaveFields_AcceptsAnInputObjectTypeWithAFieldFunction(t *testing.T) {
 	_, err := schemaWithInputObject(graphql.NewInputObject(graphql.InputObjectConfig{
 		Name: "SomeInputObject",
-		Fields: (graphql.InputObjectConfigFieldMapThunk)(func() graphql.InputObjectConfigFieldMap {
+		Fields: (graphql.InputObjectConfigFieldMapThunk)(func() (graphql.InputObjectConfigFieldMap, error) {
 			return graphql.InputObjectConfigFieldMap{
 				"f": &graphql.InputObjectFieldConfig{
 					Type: graphql.String,
 				},
-			}
+			}, nil
 		}),
 	}))
 	if err != nil {
