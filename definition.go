@@ -1206,11 +1206,27 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 	if fieldName == "" || fieldConfig == nil {
 		return
 	}
-	fieldMap, ok := gt.typeConfig.Fields.(InputObjectConfigFieldMap)
-	if gt.err = invariant(ok, "Cannot add field to a thunk"); gt.err != nil {
-		return
+
+	switch fields := gt.typeConfig.Fields.(type) {
+	case InputObjectConfigFieldMap:
+		// If the fields were defined synchronously (not a thunk),
+		// we just add to the map
+		fields[fieldName] = fieldConfig
+	case InputObjectConfigFieldMapThunk:
+		// If the fields were defined using a thunk, we wrap the
+		// original thunk behind a new thunk which appends the new
+		// field
+		var newThunk InputObjectConfigFieldMapThunk = func() (InputObjectConfigFieldMap, error) {
+			oldFieldMap, err := fields()
+			if err != nil {
+				return nil, err
+			}
+			oldFieldMap[fieldName] = fieldConfig
+			return oldFieldMap, nil
+		}
+		gt.typeConfig.Fields = newThunk
 	}
-	fieldMap[fieldName] = fieldConfig
+
 	gt.fields = gt.defineFieldMap()
 }
 
