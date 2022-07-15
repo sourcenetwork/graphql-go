@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -588,6 +590,12 @@ func defineFieldMap(ttype Named, fieldMap Fields) (FieldDefinitionMap, error) {
 			}
 			fieldDef.Args = append(fieldDef.Args, fieldArg)
 		}
+
+		// Sort args so that their order is deterministic (alpha-numeric descending)
+		sort.Slice(fieldDef.Args, func(i, j int) bool {
+			return strings.Compare(fieldDef.Args[i].Name(), fieldDef.Args[j].Name()) == -1
+		})
+
 		resultFieldMap[fieldName] = fieldDef
 	}
 	return resultFieldMap, nil

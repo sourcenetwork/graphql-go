@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/printer"
@@ -618,6 +619,12 @@ func init() {
 				for _, field := range ttype.Fields() {
 					fields = append(fields, field)
 				}
+
+				// Sort args so that their order is deterministic (alpha-numeric descending)
+				sort.Slice(fields, func(i, j int) bool {
+					return strings.Compare(fields[i].Name(), fields[j].Name()) == -1
+				})
+
 				return fields, nil
 			}
 			return nil, nil
