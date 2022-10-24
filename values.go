@@ -443,6 +443,10 @@ func valueFromAST(valueAST ast.Value, ttype Input, variables map[string]interfac
 	return nil
 }
 
+func ValueFromAST(valueAST ast.Value, ttype Input, variables map[string]interface{}) interface{} {
+	return valueFromAST(valueAST, ttype, variables)
+}
+
 func invariant(condition bool, message string) error {
 	if !condition {
 		return gqlerrors.NewFormattedError(message)

@@ -1043,6 +1043,10 @@ func getFieldDef(schema Schema, parentType *Object, fieldName string) *FieldDefi
 	return parentType.Fields()[fieldName]
 }
 
+func GetFieldDef(schema Schema, parentType *Object, fieldName string) *FieldDefinition {
+	return getFieldDef(schema, parentType, fieldName)
+}
+
 // contains field information that will be placed in an ordered slice
 type orderedField struct {
 	responseName string
