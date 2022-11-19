@@ -402,7 +402,11 @@ func valueFromAST(valueAST ast.Value, ttype Input, variables map[string]interfac
 		values := []interface{}{}
 		if valueAST, ok := valueAST.(*ast.ListValue); ok {
 			for _, itemAST := range valueAST.Values {
-				values = append(values, valueFromAST(itemAST, ttype.OfType, variables))
+				val := valueFromAST(itemAST, ttype.OfType, variables)
+				if _, ok := val.(nullValue); ok { // Null value
+					val = nil
+				}
+				values = append(values, val)
 			}
 			return values
 		}
@@ -441,6 +445,10 @@ func valueFromAST(valueAST ast.Value, ttype Input, variables map[string]interfac
 	}
 
 	return nil
+}
+
+func ValueFromAST(valueAST ast.Value, ttype Input, variables map[string]interface{}) interface{} {
+	return valueFromAST(valueAST, ttype, variables)
 }
 
 func invariant(condition bool, message string) error {
