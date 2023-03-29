@@ -18,9 +18,9 @@ func coerceInt(value interface{}) interface{} {
 	switch value := value.(type) {
 	case bool:
 		if value == true {
-			return 1
+			return int32(1)
 		}
-		return 0
+		return int32(0)
 	case *bool:
 		if value == nil {
 			return nil
@@ -30,38 +30,38 @@ func coerceInt(value interface{}) interface{} {
 		if value < int(math.MinInt32) || value > int(math.MaxInt32) {
 			return nil
 		}
-		return value
+		return int32(value)
 	case *int:
 		if value == nil {
 			return nil
 		}
 		return coerceInt(*value)
 	case int8:
-		return int(value)
+		return int32(value)
 	case *int8:
 		if value == nil {
 			return nil
 		}
-		return int(*value)
+		return int32(*value)
 	case int16:
-		return int(value)
+		return int32(value)
 	case *int16:
 		if value == nil {
 			return nil
 		}
-		return int(*value)
+		return int32(*value)
 	case int32:
-		return int(value)
+		return int32(value)
 	case *int32:
 		if value == nil {
 			return nil
 		}
-		return int(*value)
+		return int32(*value)
 	case int64:
 		if value < int64(math.MinInt32) || value > int64(math.MaxInt32) {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *int64:
 		if value == nil {
 			return nil
@@ -71,31 +71,31 @@ func coerceInt(value interface{}) interface{} {
 		if value > math.MaxInt32 {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *uint:
 		if value == nil {
 			return nil
 		}
 		return coerceInt(*value)
 	case uint8:
-		return int(value)
+		return int32(value)
 	case *uint8:
 		if value == nil {
 			return nil
 		}
-		return int(*value)
+		return int32(*value)
 	case uint16:
-		return int(value)
+		return int32(value)
 	case *uint16:
 		if value == nil {
 			return nil
 		}
-		return int(*value)
+		return int32(*value)
 	case uint32:
 		if value > uint32(math.MaxInt32) {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *uint32:
 		if value == nil {
 			return nil
@@ -105,7 +105,7 @@ func coerceInt(value interface{}) interface{} {
 		if value > uint64(math.MaxInt32) {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *uint64:
 		if value == nil {
 			return nil
@@ -115,7 +115,7 @@ func coerceInt(value interface{}) interface{} {
 		if value < float32(math.MinInt32) || value > float32(math.MaxInt32) {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *float32:
 		if value == nil {
 			return nil
@@ -125,7 +125,7 @@ func coerceInt(value interface{}) interface{} {
 		if value < float64(math.MinInt32) || value > float64(math.MaxInt32) {
 			return nil
 		}
-		return int(value)
+		return int32(value)
 	case *float64:
 		if value == nil {
 			return nil
