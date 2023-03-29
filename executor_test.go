@@ -25,7 +25,7 @@ func TestExecutesArbitraryCode(t *testing.T) {
 		"d": func() interface{} { return "Donut" },
 		"e": func() interface{} { return "Egg" },
 		"f": "Fish",
-		"pic": func(size int) string {
+		"pic": func(size int32) string {
 			return fmt.Sprintf("Pic of size: %v", size)
 		},
 		"deep": func() interface{} { return deepData },
@@ -108,12 +108,12 @@ func TestExecutesArbitraryCode(t *testing.T) {
 	// Schema Definitions
 	picResolverFn := func(p graphql.ResolveParams) (interface{}, error) {
 		// get and type assert ResolveFn for this field
-		picResolver, ok := p.Source.(map[string]interface{})["pic"].(func(size int) string)
+		picResolver, ok := p.Source.(map[string]interface{})["pic"].(func(size int32) string)
 		if !ok {
 			return nil, nil
 		}
 		// get and type assert argument
-		sizeArg, ok := p.Args["size"].(int)
+		sizeArg, ok := p.Args["size"].(int32)
 		if !ok {
 			return nil, nil
 		}
@@ -191,7 +191,7 @@ func TestExecutesArbitraryCode(t *testing.T) {
 
 	// execute
 	args := map[string]interface{}{
-		"size": 100,
+		"size": int32(100),
 	}
 	operationName := "Example"
 	ep := graphql.ExecuteParams{

@@ -143,19 +143,19 @@ func TestMutations_ExecutionOrdering_EvaluatesMutationsSerially(t *testing.T) {
 	expected := &graphql.Result{
 		Data: map[string]interface{}{
 			"first": map[string]interface{}{
-				"theNumber": 1,
+				"theNumber": int32(1),
 			},
 			"second": map[string]interface{}{
-				"theNumber": 2,
+				"theNumber": int32(2),
 			},
 			"third": map[string]interface{}{
-				"theNumber": 3,
+				"theNumber": int32(3),
 			},
 			"fourth": map[string]interface{}{
-				"theNumber": 4,
+				"theNumber": int32(4),
 			},
 			"fifth": map[string]interface{}{
-				"theNumber": 5,
+				"theNumber": int32(5),
 			},
 		},
 	}
@@ -203,17 +203,17 @@ func TestMutations_EvaluatesMutationsCorrectlyInThePresenceOfAFailedMutation(t *
 	expected := &graphql.Result{
 		Data: map[string]interface{}{
 			"first": map[string]interface{}{
-				"theNumber": 1,
+				"theNumber": int32(1),
 			},
 			"second": map[string]interface{}{
-				"theNumber": 2,
+				"theNumber": int32(2),
 			},
 			"third": nil,
 			"fourth": map[string]interface{}{
-				"theNumber": 4,
+				"theNumber": int32(4),
 			},
 			"fifth": map[string]interface{}{
-				"theNumber": 5,
+				"theNumber": int32(5),
 			},
 			"sixth": nil,
 		},
