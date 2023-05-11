@@ -159,9 +159,7 @@ var Int = NewScalar(ScalarConfig{
 	ParseLiteral: func(valueAST ast.Value) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.IntValue:
-			if intValue, err := strconv.Atoi(valueAST.Value); err == nil {
-				return intValue
-			}
+			return coerceInt(valueAST.Value)
 		}
 		return nil
 	},
