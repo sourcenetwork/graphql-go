@@ -2,10 +2,11 @@ package graphql_test
 
 import (
 	"encoding/json"
-	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/testutil"
 	"reflect"
 	"testing"
+
+	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/testutil"
 )
 
 func testSchema(t *testing.T, testField *graphql.Field) graphql.Schema {
@@ -148,7 +149,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected := map[string]interface{}{
 		"test": map[string]interface{}{
 			"Str": "",
-			"Int": 0,
+			"Int": int32(0),
 		},
 	}
 	result := graphql.Do(graphql.Params{
@@ -163,7 +164,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected = map[string]interface{}{
 		"test": map[string]interface{}{
 			"Str": "String!",
-			"Int": 0,
+			"Int": int32(0),
 		},
 	}
 	result = graphql.Do(graphql.Params{
@@ -177,7 +178,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected = map[string]interface{}{
 		"test": map[string]interface{}{
 			"Str": "String!",
-			"Int": -123,
+			"Int": int32(-123),
 		},
 	}
 	result = graphql.Do(graphql.Params{
@@ -224,7 +225,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected := map[string]interface{}{
 		"test": map[string]interface{}{
 			"str": "",
-			"int": 0,
+			"int": int32(0),
 		},
 	}
 	result := graphql.Do(graphql.Params{
@@ -239,7 +240,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected = map[string]interface{}{
 		"test": map[string]interface{}{
 			"str": "String!",
-			"int": 0,
+			"int": int32(0),
 		},
 	}
 	result = graphql.Do(graphql.Params{
@@ -253,7 +254,7 @@ func TestExecutesResolveFunction_UsesProvidedResolveFunction_SourceIsStruct_With
 	expected = map[string]interface{}{
 		"test": map[string]interface{}{
 			"str": "String!",
-			"int": -123,
+			"int": int32(-123),
 		},
 	}
 	result = graphql.Do(graphql.Params{

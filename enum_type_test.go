@@ -140,7 +140,7 @@ func TestTypeSystem_EnumValues_AcceptsEnumLiteralsAsInput(t *testing.T) {
 	query := "{ colorInt(fromEnum: GREEN) }"
 	expected := &graphql.Result{
 		Data: map[string]interface{}{
-			"colorInt": 1,
+			"colorInt": int32(1),
 		},
 	}
 	result := executeEnumTypeTest(t, query)
@@ -353,7 +353,7 @@ func TestTypeSystem_EnumValues_EnumValueMayHaveAnInternalValueOfZero(t *testing.
 	expected := &graphql.Result{
 		Data: map[string]interface{}{
 			"colorEnum": "RED",
-			"colorInt":  0,
+			"colorInt":  int32(0),
 		},
 	}
 	result := executeEnumTypeTest(t, query)
@@ -412,7 +412,7 @@ func TestTypeSystem_EnumValues_EnumValueMayBePointer(t *testing.T) {
 		Data: map[string]interface{}{
 			"query": map[string]interface{}{
 				"color": "GREEN",
-				"foo":   1}}}
+				"foo":   int32(1)}}}
 	result := g(t, graphql.Params{
 		Schema:        enumTypeTestSchema,
 		RequestString: query,

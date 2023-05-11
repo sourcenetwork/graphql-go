@@ -12,19 +12,19 @@ func TestCoerceInt(t *testing.T) {
 	}{
 		{
 			in:   false,
-			want: 0,
+			want: int32(0),
 		},
 		{
 			in:   true,
-			want: 1,
+			want: int32(1),
 		},
 		{
 			in:   boolPtr(false),
-			want: 0,
+			want: int32(0),
 		},
 		{
 			in:   boolPtr(true),
-			want: 1,
+			want: int32(1),
 		},
 		{
 			in:   (*bool)(nil),
@@ -78,15 +78,15 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   int(math.MinInt32),
-			want: int(math.MinInt32),
+			want: int32(math.MinInt32),
 		},
 		{
 			in:   int(math.MaxInt32),
-			want: int(math.MaxInt32),
+			want: int32(math.MaxInt32),
 		},
 		{
 			in:   intPtr(12),
-			want: 12,
+			want: int32(12),
 		},
 		{
 			in:   (*int)(nil),
@@ -94,11 +94,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   int8(13),
-			want: int(13),
+			want: int32(13),
 		},
 		{
 			in:   int8Ptr(14),
-			want: int(14),
+			want: int32(14),
 		},
 		{
 			in:   (*int8)(nil),
@@ -106,11 +106,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   int16(15),
-			want: int(15),
+			want: int32(15),
 		},
 		{
 			in:   int16Ptr(16),
-			want: int(16),
+			want: int32(16),
 		},
 		{
 			in:   (*int16)(nil),
@@ -118,11 +118,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   int32(17),
-			want: int(17),
+			want: int32(17),
 		},
 		{
 			in:   int32Ptr(18),
-			want: int(18),
+			want: int32(18),
 		},
 		{
 			in:   (*int32)(nil),
@@ -130,11 +130,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   int64(19),
-			want: int(19),
+			want: int32(19),
 		},
 		{
 			in:   int64Ptr(20),
-			want: int(20),
+			want: int32(20),
 		},
 		{
 			in:   (*int64)(nil),
@@ -142,11 +142,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   uint8(21),
-			want: int(21),
+			want: int32(21),
 		},
 		{
 			in:   uint8Ptr(22),
-			want: int(22),
+			want: int32(22),
 		},
 		{
 			in:   (*uint8)(nil),
@@ -154,11 +154,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   uint16(23),
-			want: int(23),
+			want: int32(23),
 		},
 		{
 			in:   uint16Ptr(24),
-			want: int(24),
+			want: int32(24),
 		},
 		{
 			in:   (*uint16)(nil),
@@ -166,11 +166,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   uint32(25),
-			want: int(25),
+			want: int32(25),
 		},
 		{
 			in:   uint32Ptr(26),
-			want: int(26),
+			want: int32(26),
 		},
 		{
 			in:   (*uint32)(nil),
@@ -178,11 +178,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   uint64(27),
-			want: int(27),
+			want: int32(27),
 		},
 		{
 			in:   uint64Ptr(28),
-			want: int(28),
+			want: int32(28),
 		},
 		{
 			in:   (*uint64)(nil),
@@ -190,7 +190,7 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   uintPtr(29),
-			want: int(29),
+			want: int32(29),
 		},
 		{
 			in:   (*uint)(nil),
@@ -198,11 +198,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   float32(30.1),
-			want: int(30),
+			want: int32(30),
 		},
 		{
 			in:   float32Ptr(31.2),
-			want: int(31),
+			want: int32(31),
 		},
 		{
 			in:   (*float32)(nil),
@@ -210,11 +210,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   float64(32),
-			want: int(32),
+			want: int32(32),
 		},
 		{
 			in:   float64Ptr(33.1),
-			want: int(33),
+			want: int32(33),
 		},
 		{
 			in:   (*float64)(nil),
@@ -222,11 +222,11 @@ func TestCoerceInt(t *testing.T) {
 		},
 		{
 			in:   "34",
-			want: int(34),
+			want: int32(34),
 		},
 		{
 			in:   stringPtr("35"),
-			want: int(35),
+			want: int32(35),
 		},
 		{
 			in:   (*string)(nil),
