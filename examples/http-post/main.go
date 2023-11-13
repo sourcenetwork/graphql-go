@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/examples/todo/schema"
+	"github.com/sourcenetwork/graphql-go"
+	"github.com/sourcenetwork/graphql-go/examples/todo/schema"
 )
 
 type postData struct {

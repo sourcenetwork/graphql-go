@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
+	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
 // Type interface for all of the possible kinds of GraphQL types

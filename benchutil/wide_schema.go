@@ -3,7 +3,7 @@ package benchutil
 import (
 	"fmt"
 
-	"github.com/graphql-go/graphql"
+	"github.com/sourcenetwork/graphql-go"
 )
 
 func WideSchemaWithXFieldsAndYItems(x int, y int) graphql.Schema {

@@ -1,5 +1,3 @@
-module github.com/graphql-go/graphql
+module github.com/sourcenetwork/graphql-go
 
 go 1.15
-
-require github.com/davecgh/go-spew v1.1.1

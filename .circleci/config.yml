@@ -5,7 +5,7 @@ test_with_go_modules: &test_with_go_modules
     - run: go vet ./...
 
 test_without_go_modules: &test_without_go_modules
-  working_directory: /go/src/github.com/graphql-go/graphql
+  working_directory: /go/src/github.com/sourcenetwork/graphql-go
   steps:
     - checkout
     - run: go get -v -t -d ./...
