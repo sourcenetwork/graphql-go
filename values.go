@@ -60,7 +60,7 @@ func addValueOrNull(values map[string]interface{}, name string, value interface{
 
 // Prepares an object map of argument values given a list of argument
 // definitions and list of argument AST nodes.
-func getArgumentValues(
+func GetArgumentValues(
 	argDefs []*Argument, argASTs []*ast.Argument,
 	variableValues map[string]interface{}) map[string]interface{} {
 

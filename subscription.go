@@ -104,7 +104,7 @@ func ExecuteSubscription(p ExecuteParams) chan *Result {
 			return
 		}()
 
-		exeContext, err := buildExecutionContext(buildExecutionCtxParams{
+		exeContext, err := BuildExecutionContext(BuildExecutionCtxParams{
 			Schema:        p.Schema,
 			Root:          p.Root,
 			AST:           p.AST,
@@ -166,7 +166,7 @@ func ExecuteSubscription(p ExecuteParams) chan *Result {
 			Key: responseName,
 		}
 
-		args := getArgumentValues(fieldDef.Args, fieldNode.Arguments, exeContext.VariableValues)
+		args := GetArgumentValues(fieldDef.Args, fieldNode.Arguments, exeContext.VariableValues)
 		info := ResolveInfo{
 			FieldName:      fieldName,
 			FieldASTs:      fieldNodes,
