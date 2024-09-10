@@ -192,7 +192,7 @@ func handleExtensionsExecutionDidStart(p *ExecuteParams) ([]gqlerrors.FormattedE
 }
 
 // handleResolveFieldDidStart handles the notification of the extensions about the start of a resolve function
-func handleExtensionsResolveFieldDidStart(exts []Extension, p *executionContext, i *ResolveInfo) ([]gqlerrors.FormattedError, resolveFieldFinishFuncHandler) {
+func handleExtensionsResolveFieldDidStart(exts []Extension, p *ExecutionContext, i *ResolveInfo) ([]gqlerrors.FormattedError, resolveFieldFinishFuncHandler) {
 	fs := map[string]ResolveFieldFinishFunc{}
 	errs := gqlerrors.FormattedErrors{}
 	for _, ext := range p.Schema.extensions {
