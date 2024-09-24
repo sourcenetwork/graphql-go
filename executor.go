@@ -165,12 +165,12 @@ type executeOperationParams struct {
 }
 
 func executeOperation(p executeOperationParams) *Result {
-	operationType, err := getOperationRootType(p.ExecutionContext.Schema, p.Operation)
+	operationType, err := GetOperationRootType(p.ExecutionContext.Schema, p.Operation)
 	if err != nil {
 		return &Result{Errors: gqlerrors.FormatErrors(err)}
 	}
 
-	fields := collectFields(collectFieldsParams{
+	fields := CollectFields(CollectFieldsParams{
 		ExeContext:   p.ExecutionContext,
 		RuntimeType:  operationType,
 		SelectionSet: p.Operation.GetSelectionSet(),
@@ -191,7 +191,7 @@ func executeOperation(p executeOperationParams) *Result {
 }
 
 // Extracts the root type of the operation from the schema.
-func getOperationRootType(schema Schema, operation ast.Definition) (*Object, error) {
+func GetOperationRootType(schema Schema, operation ast.Definition) (*Object, error) {
 	if operation == nil {
 		return nil, errors.New("Can only execute queries, mutations and subscription")
 	}
@@ -398,7 +398,7 @@ func dethunkListDepthFirst(list []interface{}) {
 	}
 }
 
-type collectFieldsParams struct {
+type CollectFieldsParams struct {
 	ExeContext           *ExecutionContext
 	RuntimeType          *Object // previously known as OperationType
 	SelectionSet         *ast.SelectionSet
@@ -411,7 +411,7 @@ type collectFieldsParams struct {
 // CollectFields requires the "runtime type" of an object. For a field which
 // returns and Interface or Union type, the "runtime type" will be the actual
 // Object type returned by that field.
-func collectFields(p collectFieldsParams) (fields map[string][]*ast.Field) {
+func CollectFields(p CollectFieldsParams) (fields map[string][]*ast.Field) {
 	// overlying SelectionSet & Fields to fields
 	if p.SelectionSet == nil {
 		return p.Fields
@@ -440,14 +440,14 @@ func collectFields(p collectFieldsParams) (fields map[string][]*ast.Field) {
 				!doesFragmentConditionMatch(p.ExeContext, selection, p.RuntimeType) {
 				continue
 			}
-			innerParams := collectFieldsParams{
+			innerParams := CollectFieldsParams{
 				ExeContext:           p.ExeContext,
 				RuntimeType:          p.RuntimeType,
 				SelectionSet:         selection.SelectionSet,
 				Fields:               fields,
 				VisitedFragmentNames: p.VisitedFragmentNames,
 			}
-			collectFields(innerParams)
+			CollectFields(innerParams)
 		case *ast.FragmentSpread:
 			fragName := ""
 			if selection.Name != nil {
@@ -467,14 +467,14 @@ func collectFields(p collectFieldsParams) (fields map[string][]*ast.Field) {
 				if !doesFragmentConditionMatch(p.ExeContext, fragment, p.RuntimeType) {
 					continue
 				}
-				innerParams := collectFieldsParams{
+				innerParams := CollectFieldsParams{
 					ExeContext:           p.ExeContext,
 					RuntimeType:          p.RuntimeType,
 					SelectionSet:         fragment.GetSelectionSet(),
 					Fields:               fields,
 					VisitedFragmentNames: p.VisitedFragmentNames,
 				}
-				collectFields(innerParams)
+				CollectFields(innerParams)
 			}
 		}
 	}
@@ -848,14 +848,14 @@ func completeObjectValue(eCtx *ExecutionContext, returnType *Object, fieldASTs [
 		}
 		selectionSet := fieldAST.SelectionSet
 		if selectionSet != nil {
-			innerParams := collectFieldsParams{
+			innerParams := CollectFieldsParams{
 				ExeContext:           eCtx,
 				RuntimeType:          returnType,
 				SelectionSet:         selectionSet,
 				Fields:               subFieldASTs,
 				VisitedFragmentNames: visitedFragmentNames,
 			}
-			subFieldASTs = collectFields(innerParams)
+			subFieldASTs = CollectFields(innerParams)
 		}
 	}
 	executeFieldsParams := executeFieldsParams{

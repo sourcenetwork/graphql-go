@@ -121,7 +121,7 @@ func ExecuteSubscription(p ExecuteParams) chan *Result {
 			return
 		}
 
-		operationType, err := getOperationRootType(p.Schema, exeContext.Operation)
+		operationType, err := GetOperationRootType(p.Schema, exeContext.Operation)
 		if err != nil {
 			resultChannel <- &Result{
 				Errors: gqlerrors.FormatErrors(err),
@@ -130,7 +130,7 @@ func ExecuteSubscription(p ExecuteParams) chan *Result {
 			return
 		}
 
-		fields := collectFields(collectFieldsParams{
+		fields := CollectFields(CollectFieldsParams{
 			ExeContext:   exeContext,
 			RuntimeType:  operationType,
 			SelectionSet: exeContext.Operation.GetSelectionSet(),
