@@ -45,7 +45,7 @@ func TestTypeSystem_Scalar_ParseLiteralOutputDateTime(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			parsed := graphql.DateTime.ParseLiteral(testCase.Literal)
+			parsed := graphql.DateTime.ParseLiteral(testCase.Literal, nil)
 			if parsed != testCase.Expected {
 				t.Fatalf("failed DateTime.ParseLiteral(%T(%v)), expected: %v, got %v", testCase.Literal, testCase.Literal, parsed, testCase.Expected)
 			}

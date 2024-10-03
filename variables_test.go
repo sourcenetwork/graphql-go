@@ -26,7 +26,7 @@ var testComplexScalar *graphql.Scalar = graphql.NewScalar(graphql.ScalarConfig{
 		}
 		return nil
 	},
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		astValue := valueAST.GetValue()
 		if astValue, ok := astValue.(string); ok && astValue == "SerializedValue" {
 			return "DeserializedValue"

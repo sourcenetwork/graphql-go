@@ -15,7 +15,7 @@ var someScalarType = graphql.NewScalar(graphql.ScalarConfig{
 	ParseValue: func(value interface{}) interface{} {
 		return nil
 	},
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		return nil
 	},
 })
@@ -873,7 +873,7 @@ func TestTypeSystem_ScalarTypesMustBeSerializable_AcceptsAScalarTypeDefiningPars
 		ParseValue: func(value interface{}) interface{} {
 			return nil
 		},
-		ParseLiteral: func(valueAST ast.Value) interface{} {
+		ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 			return nil
 		},
 	}))
@@ -904,7 +904,7 @@ func TestTypeSystem_ScalarTypesMustBeSerializable_RejectsAScalarTypeDefiningPars
 		Serialize: func(value interface{}) interface{} {
 			return nil
 		},
-		ParseLiteral: func(valueAST ast.Value) interface{} {
+		ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 			return nil
 		},
 	}))

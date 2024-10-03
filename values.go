@@ -439,7 +439,7 @@ func valueFromAST(valueAST ast.Value, ttype Input, variables map[string]interfac
 		}
 		return obj
 	case *Scalar:
-		return ttype.ParseLiteral(valueAST)
+		return ttype.ParseLiteral(valueAST, variables)
 	case *Enum:
 		return ttype.ParseLiteral(valueAST)
 	}

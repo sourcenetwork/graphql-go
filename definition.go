@@ -216,7 +216,7 @@ type SerializeFn func(value interface{}) interface{}
 type ParseValueFn func(value interface{}) interface{}
 
 // ParseLiteralFn is a function type for parsing the literal value of a GraphQLScalar type
-type ParseLiteralFn func(valueAST ast.Value) interface{}
+type ParseLiteralFn func(valueAST ast.Value, variables map[string]interface{}) interface{}
 
 // ScalarConfig options for creating a new GraphQLScalar
 type ScalarConfig struct {
@@ -281,11 +281,11 @@ func (st *Scalar) ParseValue(value interface{}) interface{} {
 	}
 	return st.scalarConfig.ParseValue(value)
 }
-func (st *Scalar) ParseLiteral(valueAST ast.Value) interface{} {
+func (st *Scalar) ParseLiteral(valueAST ast.Value, variables map[string]interface{}) interface{} {
 	if st.scalarConfig.ParseLiteral == nil {
 		return nil
 	}
-	return st.scalarConfig.ParseLiteral(valueAST)
+	return st.scalarConfig.ParseLiteral(valueAST, variables)
 }
 func (st *Scalar) Name() string {
 	return st.PrivateName
