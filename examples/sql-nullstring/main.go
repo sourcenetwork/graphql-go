@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
-	"log"
 )
 
 // NullString to be used in place of sql.NullString
@@ -76,7 +77,7 @@ func ParseNullString(value interface{}) interface{} {
 }
 
 // ParseLiteralNullString parses GraphQL AST value to `NullString`.
-func ParseLiteralNullString(valueAST ast.Value) interface{} {
+func ParseLiteralNullString(valueAST ast.Value, variables map[string]interface{}) interface{} {
 	switch valueAST := valueAST.(type) {
 	case *ast.StringValue:
 		return NewNullString(valueAST.Value)

@@ -156,7 +156,7 @@ var Int = NewScalar(ScalarConfig{
 		"values. Int can represent values between -(2^31) and 2^31 - 1. ",
 	Serialize:  coerceInt,
 	ParseValue: coerceInt,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.IntValue:
 			return coerceInt(valueAST.Value)
@@ -287,7 +287,7 @@ var Float = NewScalar(ScalarConfig{
 		"[IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). ",
 	Serialize:  coerceFloat,
 	ParseValue: coerceFloat,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.FloatValue:
 			if floatValue, err := strconv.ParseFloat(valueAST.Value, 64); err == nil {
@@ -320,7 +320,7 @@ var String = NewScalar(ScalarConfig{
 		"represent free-form human-readable text.",
 	Serialize:  coerceString,
 	ParseValue: coerceString,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
 			return valueAST.Value
@@ -479,7 +479,7 @@ var Boolean = NewScalar(ScalarConfig{
 	Description: "The `Boolean` scalar type represents `true` or `false`.",
 	Serialize:   coerceBool,
 	ParseValue:  coerceBool,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.BooleanValue:
 			return valueAST.Value
@@ -498,7 +498,7 @@ var ID = NewScalar(ScalarConfig{
 		"(such as `4`) input value will be accepted as an ID.",
 	Serialize:  coerceString,
 	ParseValue: coerceString,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.IntValue:
 			return valueAST.Value
@@ -558,7 +558,7 @@ var DateTime = NewScalar(ScalarConfig{
 		" The DateTime is serialized as an RFC 3339 quoted string",
 	Serialize:  serializeDateTime,
 	ParseValue: unserializeDateTime,
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
 			return unserializeDateTime(valueAST.Value)

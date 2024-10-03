@@ -48,7 +48,7 @@ var CustomScalarType = graphql.NewScalar(graphql.ScalarConfig{
 		}
 	},
 	// ParseLiteral parses GraphQL AST value to `CustomID`.
-	ParseLiteral: func(valueAST ast.Value) interface{} {
+	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
 			return NewCustomID(valueAST.Value)
