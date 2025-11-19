@@ -561,7 +561,13 @@ var DateTime = NewScalar(ScalarConfig{
 	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
 		switch valueAST := valueAST.(type) {
 		case *ast.StringValue:
+			// Parse normal RFC3339 string
 			return unserializeDateTime(valueAST.Value)
+		case *ast.EnumValue:
+			// Support the literal `now`
+			if valueAST.Value == "now" {
+				return time.Now().UTC()
+			}
 		}
 		return nil
 	},
