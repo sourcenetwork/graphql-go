@@ -557,7 +557,9 @@ var DateTime = NewScalar(ScalarConfig{
 	Description: "The `DateTime` scalar type represents a DateTime." +
 		" The DateTime is serialized as an RFC 3339 quoted string." +
 		" A literal value of `UTC_NOW` is supported, and will be serialized " +
-		" as the current UTC time.",
+		" as the current UTC time. Note that this will be resolved as the UTC time on" +
+		" the server's side. It may not exactly match the resolution of time.Now().UTC()" +
+        " on the client's machine at the exact time of sending the request.",	
 	Serialize:  serializeDateTime,
 	ParseValue: unserializeDateTime,
 	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
