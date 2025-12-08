@@ -9,6 +9,10 @@ import (
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
 
+const (
+	UTC_NOW = "UTC_NOW"
+)
+
 // As per the GraphQL Spec, Integers are only treated as valid when a valid
 // 32-bit signed integer, providing the broadest support across platforms.
 //
@@ -559,7 +563,7 @@ var DateTime = NewScalar(ScalarConfig{
 		" A literal value of `UTC_NOW` is supported, and will be serialized " +
 		" as the current UTC time. Note that this will be resolved as the UTC time on" +
 		" the server's side. It may not exactly match the resolution of time.Now().UTC()" +
-        " on the client's machine at the time of sending the request.",	
+		" on the client's machine at the time of sending the request.",
 	Serialize:  serializeDateTime,
 	ParseValue: unserializeDateTime,
 	ParseLiteral: func(valueAST ast.Value, variables map[string]interface{}) interface{} {
@@ -569,8 +573,8 @@ var DateTime = NewScalar(ScalarConfig{
 			return unserializeDateTime(valueAST.Value)
 		case *ast.EnumValue:
 			// Support the literal `UTC_NOW`
-			if valueAST.Value == "UTC_NOW" {
-				return time.Now().UTC()
+			if valueAST.Value == UTC_NOW {
+				return UTC_NOW
 			}
 		}
 		return nil
