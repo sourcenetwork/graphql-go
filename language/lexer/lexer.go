@@ -594,7 +594,15 @@ func runeAt(body []byte, position int) (code rune, charWidth int) {
 // Reads from body starting at startPosition until it finds a non-whitespace
 // or commented character, then returns the position of that character for lexing.
 // lexing.
-// Returns both byte positions and rune position
+//
+// Both return values are byte offsets into body. The second value is retained
+// for API compatibility (callers historically treated it as a "rune position"),
+// but it MUST advance in lockstep with the byte position: token Start/End offsets
+// are consumed as byte offsets everywhere else (GetLocation indexes body with
+// them, and the parser feeds Token.End back as the byte start of the next read).
+// Advancing by 1 per rune here would make the two values diverge as soon as an
+// ignored token (whitespace or a # comment) contains a multi-byte UTF-8 rune,
+// shifting every subsequent token and producing spurious syntax errors.
 func positionAfterWhitespace(body []byte, startPosition int) (position int, runePosition int) {
 	bodyLength := len(body)
 	position = startPosition
@@ -614,10 +622,10 @@ func positionAfterWhitespace(body []byte, startPosition int) (position int, rune
 				// Comma
 				code == 0x002C {
 				position += n
-				runePosition++
+				runePosition += n
 			} else if code == 35 { // #
 				position += n
-				runePosition++
+				runePosition += n
 				for {
 					code, n := runeAt(body, position)
 					if position < bodyLength &&
@@ -625,7 +633,7 @@ func positionAfterWhitespace(body []byte, startPosition int) (position int, rune
 						// SourceCharacter but not LineTerminator
 						(code > 0x001F || code == 0x0009) && code != 0x000A && code != 0x000D {
 						position += n
-						runePosition++
+						runePosition += n
 						continue
 					} else {
 						break

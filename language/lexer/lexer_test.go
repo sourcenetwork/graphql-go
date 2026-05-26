@@ -88,11 +88,12 @@ func TestLexer_DisallowsUncommonControlCharacters(t *testing.T) {
 func TestLexer_AcceptsBOMHeader(t *testing.T) {
 	tests := []Test{
 		{
+			// The BOM is 3 bytes, so after it and the space "foo" is at bytes 4:7.
 			Body: "\uFEFF foo",
 			Expected: Token{
 				Kind:  NAME,
-				Start: 2,
-				End:   5,
+				Start: 4,
+				End:   7,
 				Value: "foo",
 			},
 		},
@@ -1067,5 +1068,42 @@ func TestLexer_ReportsUsefulInformationForDashesInNames(t *testing.T) {
 	}
 	if err.Error() != errExpected {
 		t.Fatalf("unexpected error, token:%v\nexpected:\n%v\n\ngot:\n%v", token, errExpected, err.Error())
+	}
+}
+
+// A multi-byte character in a comment or whitespace must not move the byte
+// offsets of the next token. Start/End are byte offsets, so the lexer must
+// skip such a character by its byte count, not count it as one.
+func TestLexer_SkipsMultiByteRunesInIgnoredTokens(t *testing.T) {
+	tests := []Test{
+		{
+			// The em-dash is 3 bytes, so "foo" is at bytes 6:9.
+			Body: "# —\nfoo",
+			Expected: Token{
+				Kind:  NAME,
+				Start: 6,
+				End:   9,
+				Value: "foo",
+			},
+		},
+		{
+			// Two em-dashes (3 bytes each) push "foo" to bytes 10:13.
+			Body: "# — —\nfoo",
+			Expected: Token{
+				Kind:  NAME,
+				Start: 10,
+				End:   13,
+				Value: "foo",
+			},
+		},
+	}
+	for _, test := range tests {
+		token, err := Lex(&source.Source{Body: []byte(test.Body)})(0)
+		if err != nil {
+			t.Errorf("unexpected error: %v, body: %q", err, test.Body)
+		}
+		if !reflect.DeepEqual(token, test.Expected) {
+			t.Errorf("unexpected token, expected: %v, got: %v, body: %q", test.Expected, token, test.Body)
+		}
 	}
 }
