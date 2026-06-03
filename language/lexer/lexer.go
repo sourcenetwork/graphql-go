@@ -108,13 +108,11 @@ func Lex(s *source.Source) Lexer {
 
 // Reads an alphanumeric + underscore name from the source.
 // [_A-Za-z][_0-9A-Za-z]*
-// position: Points to the byte position in the byte array
-// runePosition: Points to the rune position in the byte array
-func readName(source *source.Source, position, runePosition int) Token {
+// position is a byte offset; names are ASCII, so token Start/End are byte offsets.
+func readName(source *source.Source, position int) Token {
 	body := source.Body
 	bodyLength := len(body)
 	endByte := position + 1
-	endRune := runePosition + 1
 	for {
 		code, _ := runeAt(body, endByte)
 		if (endByte != bodyLength) &&
@@ -123,13 +121,12 @@ func readName(source *source.Source, position, runePosition int) Token {
 				code >= 'A' && code <= 'Z' || // A-Z
 				code >= 'a' && code <= 'z') { // a-z
 			endByte++
-			endRune++
 			continue
 		} else {
 			break
 		}
 	}
-	return makeToken(NAME, runePosition, endRune, string(body[position:endByte]))
+	return makeToken(NAME, position, endByte, string(body[position:endByte]))
 }
 
 // Reads a number token from the source file, either a float
@@ -233,7 +230,7 @@ func readString(s *source.Source, start int) (Token, error) {
 
 			// SourceCharacter
 			if code < 0x0020 && code != 0x0009 {
-				return Token{}, gqlerrors.NewSyntaxError(s, runePosition, fmt.Sprintf(`Invalid character within String: %v.`, printCharCode(code)))
+				return Token{}, gqlerrors.NewSyntaxError(s, position, fmt.Sprintf(`Invalid character within String: %v.`, printCharCode(code)))
 			}
 			position += n
 			runePosition++
@@ -268,7 +265,7 @@ func readString(s *source.Source, start int) (Token, error) {
 				case 'u':
 					// Check if there are at least 4 bytes available
 					if len(body) <= position+4 {
-						return Token{}, gqlerrors.NewSyntaxError(s, runePosition,
+						return Token{}, gqlerrors.NewSyntaxError(s, position,
 							fmt.Sprintf("Invalid character escape sequence: "+
 								"\\u%v", string(body[position+1:])))
 					}
@@ -279,7 +276,7 @@ func readString(s *source.Source, start int) (Token, error) {
 						rune(body[position+4]),
 					)
 					if charCode < 0 {
-						return Token{}, gqlerrors.NewSyntaxError(s, runePosition,
+						return Token{}, gqlerrors.NewSyntaxError(s, position,
 							fmt.Sprintf("Invalid character escape sequence: "+
 								"\\u%v", string(body[position+1:position+5])))
 					}
@@ -288,7 +285,7 @@ func readString(s *source.Source, start int) (Token, error) {
 					runePosition += 4
 					break
 				default:
-					return Token{}, gqlerrors.NewSyntaxError(s, runePosition,
+					return Token{}, gqlerrors.NewSyntaxError(s, position,
 						fmt.Sprintf(`Invalid character escape sequence: \\%c.`, code))
 				}
 				position += n
@@ -301,7 +298,7 @@ func readString(s *source.Source, start int) (Token, error) {
 		}
 	}
 	if code != '"' { // quote (")
-		return Token{}, gqlerrors.NewSyntaxError(s, runePosition, "Unterminated string.")
+		return Token{}, gqlerrors.NewSyntaxError(s, position, "Unterminated string.")
 	}
 	stringContent := body[chunkStart:position]
 	valueBuffer.Write(stringContent)
@@ -344,7 +341,7 @@ func readBlockString(s *source.Source, start int) (Token, error) {
 			code != 0x0009 &&
 			code != 0x000a &&
 			code != 0x000d {
-			return Token{}, gqlerrors.NewSyntaxError(s, runePosition, fmt.Sprintf(`Invalid character within String: %v.`, printCharCode(code)))
+			return Token{}, gqlerrors.NewSyntaxError(s, position, fmt.Sprintf(`Invalid character within String: %v.`, printCharCode(code)))
 		}
 
 		// Escape Triple-Quote (\""")
@@ -366,7 +363,7 @@ func readBlockString(s *source.Source, start int) (Token, error) {
 		runePosition++
 	}
 
-	return Token{}, gqlerrors.NewSyntaxError(s, runePosition, "Unterminated string.")
+	return Token{}, gqlerrors.NewSyntaxError(s, position, "Unterminated string.")
 }
 
 var splitLinesRegex = regexp.MustCompile("\r\n|[\n\r]")
@@ -482,7 +479,7 @@ func printCharCode(code rune) string {
 func readToken(s *source.Source, fromPosition int) (Token, error) {
 	body := s.Body
 	bodyLength := len(body)
-	position, runePosition := positionAfterWhitespace(body, fromPosition)
+	position := positionAfterWhitespace(body, fromPosition)
 	if position >= bodyLength {
 		return makeToken(EOF, position, position, ""), nil
 	}
@@ -490,7 +487,7 @@ func readToken(s *source.Source, fromPosition int) (Token, error) {
 
 	// SourceCharacter
 	if code < 0x0020 && code != 0x0009 && code != 0x000A && code != 0x000D {
-		return Token{}, gqlerrors.NewSyntaxError(s, runePosition, fmt.Sprintf(`Invalid character %v`, printCharCode(code)))
+		return Token{}, gqlerrors.NewSyntaxError(s, position, fmt.Sprintf(`Invalid character %v`, printCharCode(code)))
 	}
 
 	switch code {
@@ -544,12 +541,12 @@ func readToken(s *source.Source, fromPosition int) (Token, error) {
 	// A-Z
 	case 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
 		'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z':
-		return readName(s, position, runePosition), nil
+		return readName(s, position), nil
 	// _
 	// a-z
 	case '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
 		'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z':
-		return readName(s, position, runePosition), nil
+		return readName(s, position), nil
 	// -
 	// 0-9
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
@@ -572,7 +569,7 @@ func readToken(s *source.Source, fromPosition int) (Token, error) {
 		return token, err
 	}
 	description := fmt.Sprintf("Unexpected character %v.", printCharCode(code))
-	return Token{}, gqlerrors.NewSyntaxError(s, runePosition, description)
+	return Token{}, gqlerrors.NewSyntaxError(s, position, description)
 }
 
 // Gets the rune from the byte array at given byte position and it's width in bytes
@@ -591,22 +588,13 @@ func runeAt(body []byte, position int) (code rune, charWidth int) {
 	return r, n
 }
 
-// Reads from body starting at startPosition until it finds a non-whitespace
-// or commented character, then returns the position of that character for lexing.
-// lexing.
-//
-// Both return values are byte offsets into body. The second value is retained
-// for API compatibility (callers historically treated it as a "rune position"),
-// but it MUST advance in lockstep with the byte position: token Start/End offsets
-// are consumed as byte offsets everywhere else (GetLocation indexes body with
-// them, and the parser feeds Token.End back as the byte start of the next read).
-// Advancing by 1 per rune here would make the two values diverge as soon as an
-// ignored token (whitespace or a # comment) contains a multi-byte UTF-8 rune,
-// shifting every subsequent token and producing spurious syntax errors.
-func positionAfterWhitespace(body []byte, startPosition int) (position int, runePosition int) {
+// Skips leading whitespace and comments and returns the byte position of the
+// next character to lex. It advances by each rune's byte width, not one per
+// rune: token offsets are byte offsets everywhere, so counting runes here would
+// drift on any multi-byte rune in an ignored token and shift every later token.
+func positionAfterWhitespace(body []byte, startPosition int) int {
 	bodyLength := len(body)
-	position = startPosition
-	runePosition = startPosition
+	position := startPosition
 	for {
 		if position < bodyLength {
 			code, n := runeAt(body, position)
@@ -622,10 +610,8 @@ func positionAfterWhitespace(body []byte, startPosition int) (position int, rune
 				// Comma
 				code == 0x002C {
 				position += n
-				runePosition += n
 			} else if code == 35 { // #
 				position += n
-				runePosition += n
 				for {
 					code, n := runeAt(body, position)
 					if position < bodyLength &&
@@ -633,7 +619,6 @@ func positionAfterWhitespace(body []byte, startPosition int) (position int, rune
 						// SourceCharacter but not LineTerminator
 						(code > 0x001F || code == 0x0009) && code != 0x000A && code != 0x000D {
 						position += n
-						runePosition += n
 						continue
 					} else {
 						break
@@ -647,7 +632,7 @@ func positionAfterWhitespace(body []byte, startPosition int) (position int, rune
 			break
 		}
 	}
-	return position, runePosition
+	return position
 }
 
 func GetTokenDesc(token Token) string {

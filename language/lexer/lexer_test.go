@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -1104,6 +1105,38 @@ func TestLexer_SkipsMultiByteRunesInIgnoredTokens(t *testing.T) {
 		}
 		if !reflect.DeepEqual(token, test.Expected) {
 			t.Errorf("unexpected token, expected: %v, got: %v, body: %q", test.Expected, token, test.Body)
+		}
+	}
+}
+
+// Error columns count characters, not bytes: a multi-byte rune before the error
+// advances the column by one, matching what an editor shows.
+func TestLexer_ErrorColumnCountsCharactersNotBytes(t *testing.T) {
+	tests := []struct {
+		body     string
+		expected string
+	}{
+		{
+			// Two 3-byte em-dashes in a comment; the invalid char is char 7.
+			body:     "# — — \x00",
+			expected: `Syntax Error  (1:7) Invalid character "\\u0000"`,
+		},
+		{
+			// Multi-byte runes in a string; the bad escape is char 12.
+			body:     "\"bфы世ыы𠱸d \\uXXXF esc\"",
+			expected: `Syntax Error  (1:12) Invalid character escape sequence: \uXXXF`,
+		},
+	}
+	for _, test := range tests {
+		_, err := Lex(&source.Source{Body: []byte(test.body)})(0)
+		if err == nil {
+			t.Errorf("expected error, got nil, body: %q", test.body)
+			continue
+		}
+		// Compare only the first line; the escape error appends a caret diagram.
+		got := strings.SplitN(err.Error(), "\n", 2)[0]
+		if got != test.expected {
+			t.Errorf("unexpected error\nexpected: %q\ngot:      %q\nbody: %q", test.expected, got, test.body)
 		}
 	}
 }
