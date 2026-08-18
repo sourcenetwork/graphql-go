@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
@@ -1146,6 +1147,7 @@ type InputObject struct {
 
 	typeConfig InputObjectConfig
 	fields     InputObjectFieldMap
+	fieldsOnce sync.Once
 	init       bool
 	err        error
 }
@@ -1272,9 +1274,11 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 }
 
 func (gt *InputObject) Fields() InputObjectFieldMap {
-	if !gt.init {
-		gt.fields = gt.defineFieldMap()
-	}
+	gt.fieldsOnce.Do(func() {
+		if !gt.init {
+			gt.fields = gt.defineFieldMap()
+		}
+	})
 	return gt.fields
 }
 func (gt *InputObject) Name() string {

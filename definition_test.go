@@ -3,6 +3,8 @@ package graphql_test
 import (
 	"fmt"
 	"reflect"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/sourcenetwork/graphql-go"
@@ -665,6 +667,48 @@ func TestTypeSystem_DefinitionExample_CanAddInputObjectField(t *testing.T) {
 	}
 	if _, ok := fieldMap["newValue"]; !ok {
 		t.Fatal("Unexpected result, inputObject should have a field named 'newValue'")
+	}
+}
+
+func TestTypeSystem_DefinitionExample_InitializesInputObjectFieldsOnce(t *testing.T) {
+	const workers = 32
+	var calls int32
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	io := graphql.NewInputObject(graphql.InputObjectConfig{
+		Name: "inputObject",
+		Fields: graphql.InputObjectConfigFieldMapThunk(func() (graphql.InputObjectConfigFieldMap, error) {
+			if atomic.AddInt32(&calls, 1) == 1 {
+				close(entered)
+			}
+			<-release
+			return graphql.InputObjectConfigFieldMap{
+				"value": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			}, nil
+		}),
+	})
+
+	fields := make(chan graphql.InputObjectFieldMap, workers)
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fields <- io.Fields()
+		}()
+	}
+	<-entered
+	close(release)
+	wg.Wait()
+	close(fields)
+
+	if atomic.LoadInt32(&calls) != 1 {
+		t.Fatalf("field thunk called %d times, want 1", atomic.LoadInt32(&calls))
+	}
+	for fieldMap := range fields {
+		if fieldMap["value"].Type != graphql.String {
+			t.Fatal("input object field was not initialized")
+		}
 	}
 }
 
