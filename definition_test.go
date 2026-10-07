@@ -668,6 +668,37 @@ func TestTypeSystem_DefinitionExample_CanAddInputObjectField(t *testing.T) {
 	}
 }
 
+// Adding a field after the field map was lazily built must invalidate the
+// cached map so the added field becomes visible. AddFieldConfig depends on
+// being able to rebuild the map, which is also why the lazy initialisation is
+// guarded by a mutex instead of a sync.Once that could never be reset.
+func TestTypeSystem_DefinitionExample_CanAddInputObjectFieldAfterInitialisation(t *testing.T) {
+	io := graphql.NewInputObject(graphql.InputObjectConfig{
+		Name: "inputObject",
+		Fields: graphql.InputObjectConfigFieldMap{
+			"value": &graphql.InputObjectFieldConfig{
+				Type: graphql.String,
+			},
+		},
+	})
+
+	fieldMap := io.Fields()
+	if len(fieldMap) != 1 {
+		t.Fatalf("Unexpected result, inputObject should have one field, has %d", len(fieldMap))
+	}
+
+	io.AddFieldConfig("newValue", &graphql.InputObjectFieldConfig{
+		Type: graphql.Int,
+	})
+	fieldMap = io.Fields()
+	if len(fieldMap) != 2 {
+		t.Fatalf("Unexpected result, inputObject should have two fields, has %d", len(fieldMap))
+	}
+	if _, ok := fieldMap["newValue"]; !ok {
+		t.Fatal("Unexpected result, inputObject should have a field named 'newValue'")
+	}
+}
+
 func TestTypeSystem_DefinitionExample_IncludesUnionTypesThunk(t *testing.T) {
 	someObject := graphql.NewObject(graphql.ObjectConfig{
 		Name: "SomeObject",

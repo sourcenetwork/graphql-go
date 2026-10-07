@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
@@ -1148,6 +1149,14 @@ type InputObject struct {
 	fields     InputObjectFieldMap
 	init       bool
 	err        error
+
+	// fieldsMutex guards the lazily built state above: a shared schema can be
+	// read by concurrent requests, and an unsynchronised init could expose a
+	// partially built field map or crash the runtime on concurrent map access.
+	// A mutex is used rather than sync.Once because AddFieldConfig must be able
+	// to rebuild the map, and a failed init must remain retryable (init is only
+	// set on success).
+	fieldsMutex sync.RWMutex
 }
 type InputObjectFieldConfig struct {
 	Type         Input       `json:"type"`
@@ -1195,6 +1204,9 @@ func NewInputObject(config InputObjectConfig) *InputObject {
 	return gt
 }
 
+// defineFieldMap builds the field map from the configured fields and stores
+// the built state on gt. It mutates gt.fields, gt.err and gt.init, so callers
+// must hold gt.fieldsMutex.
 func (gt *InputObject) defineFieldMap() InputObjectFieldMap {
 	var (
 		fieldMap InputObjectConfigFieldMap
@@ -1248,6 +1260,11 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 		return
 	}
 
+	// Both the typeConfig.Fields mutation and the immediate rebuild below
+	// must be serialised against concurrent Fields() readers.
+	gt.fieldsMutex.Lock()
+	defer gt.fieldsMutex.Unlock()
+
 	switch fields := gt.typeConfig.Fields.(type) {
 	case InputObjectConfigFieldMap:
 		// If the fields were defined synchronously (not a thunk),
@@ -1272,6 +1289,21 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 }
 
 func (gt *InputObject) Fields() InputObjectFieldMap {
+	// Fast path for the read-mostly steady state: the map is copied under the
+	// read lock so no write can interleave. gt.init is only ever written while
+	// holding the write lock, so a reader observing it as true also observes
+	// the completed map write ordered before it in the writer's critical
+	// section.
+	gt.fieldsMutex.RLock()
+	if gt.init {
+		fields := gt.fields
+		gt.fieldsMutex.RUnlock()
+		return fields
+	}
+	gt.fieldsMutex.RUnlock()
+
+	gt.fieldsMutex.Lock()
+	defer gt.fieldsMutex.Unlock()
 	if !gt.init {
 		gt.fields = gt.defineFieldMap()
 	}
@@ -1287,6 +1319,10 @@ func (gt *InputObject) String() string {
 	return gt.PrivateName
 }
 func (gt *InputObject) Error() error {
+	// gt.err is written by defineFieldMap while holding the write lock, so it
+	// must not be read unsynchronised while initialisation runs concurrently.
+	gt.fieldsMutex.RLock()
+	defer gt.fieldsMutex.RUnlock()
 	return gt.err
 }
 
