@@ -81,7 +81,8 @@ func TestRace(t *testing.T) {
 // requests. Phase one hammers a standalone input object directly; phase two
 // reproduces the reported validation stack by keeping the input object
 // uninitialized at NewSchema time via a directive argument, since NewSchema
-// only eagerly initialises input objects reachable through field arguments.
+// only eagerly initialises input objects reachable through field arguments;
+// phase three adds fields to the phase one input object while it is read.
 func TestRaceInputObjectFields(t *testing.T) {
 	runRaceProgram(t, `
 		package main
@@ -192,6 +193,30 @@ func TestRaceInputObjectFields(t *testing.T) {
 				}()
 			}
 			doWG.Wait()
+
+			// Phase 3: AddFieldConfig rebuilds the field map of the phase 1
+			// input object while two goroutines read it.
+			var addWG sync.WaitGroup
+			addWG.Add(3)
+			go func() {
+				defer addWG.Done()
+				for j := 0; j < 50; j++ {
+					inputObject.AddFieldConfig(fmt.Sprintf("added%d", j), &graphql.InputObjectFieldConfig{
+						Type: graphql.String,
+					})
+				}
+			}()
+			for i := 0; i < 2; i++ {
+				go func() {
+					defer addWG.Done()
+					for j := 0; j < 100; j++ {
+						_ = inputObject.Error()
+						_ = inputObject.Fields()
+						runtime.Gosched()
+					}
+				}()
+			}
+			addWG.Wait()
 		}
 	`)
 }
