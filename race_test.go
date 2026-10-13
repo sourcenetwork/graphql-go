@@ -196,6 +196,63 @@ func TestRaceInputObjectFields(t *testing.T) {
 	`)
 }
 
+// TestRaceInputObjectError runs NewSchema on two goroutines whose schemas share
+// one input object with a failing fields thunk. A failed build leaves the input
+// object uninitialised, so every NewSchema call rebuilds its fields and reads
+// its error while the other goroutine may be rebuilding them.
+func TestRaceInputObjectError(t *testing.T) {
+	runRaceProgram(t, `
+		package main
+
+		import (
+			"errors"
+			"fmt"
+			"os"
+			"sync"
+
+			"github.com/sourcenetwork/graphql-go"
+		)
+
+		func main() {
+			errFields := errors.New("fields unavailable")
+			filter := graphql.NewInputObject(graphql.InputObjectConfig{
+				Name: "Filter",
+				Fields: (graphql.InputObjectConfigFieldMapThunk)(func() (graphql.InputObjectConfigFieldMap, error) {
+					return nil, errFields
+				}),
+			})
+
+			var wg sync.WaitGroup
+			wg.Add(2)
+			for i := 0; i < 2; i++ {
+				go func() {
+					defer wg.Done()
+					for j := 0; j < 200; j++ {
+						_, err := graphql.NewSchema(graphql.SchemaConfig{
+							Query: graphql.NewObject(graphql.ObjectConfig{
+								Name: "RootQuery",
+								Fields: graphql.Fields{
+									"hello": &graphql.Field{
+										Type: graphql.String,
+										Args: graphql.FieldConfigArgument{
+											"filter": &graphql.ArgumentConfig{Type: filter},
+										},
+									},
+								},
+							}),
+						})
+						if !errors.Is(err, errFields) {
+							fmt.Println("NewSchema returned", err)
+							os.Exit(1)
+						}
+					}
+				}()
+			}
+			wg.Wait()
+		}
+	`)
+}
+
 // TestRaceEnumLookups runs concurrent requests on a shared schema that parse an
 // enum argument and serialize an enum result, so both of the enum's lookups are
 // read from several goroutines at once.
