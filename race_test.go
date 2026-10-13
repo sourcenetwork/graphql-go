@@ -195,3 +195,69 @@ func TestRaceInputObjectFields(t *testing.T) {
 		}
 	`)
 }
+
+// TestRaceEnumLookups runs concurrent requests on a shared schema that parse an
+// enum argument and serialize an enum result, so both of the enum's lookups are
+// read from several goroutines at once.
+func TestRaceEnumLookups(t *testing.T) {
+	runRaceProgram(t, `
+		package main
+
+		import (
+			"fmt"
+			"os"
+			"sync"
+
+			"github.com/sourcenetwork/graphql-go"
+		)
+
+		func main() {
+			color := graphql.NewEnum(graphql.EnumConfig{
+				Name: "Color",
+				Values: graphql.EnumValueConfigMap{
+					"RED":   &graphql.EnumValueConfig{Value: 0},
+					"GREEN": &graphql.EnumValueConfig{Value: 1},
+				},
+			})
+			schema, err := graphql.NewSchema(graphql.SchemaConfig{
+				Query: graphql.NewObject(graphql.ObjectConfig{
+					Name: "RootQuery",
+					Fields: graphql.Fields{
+						"color": &graphql.Field{
+							Type: color,
+							Args: graphql.FieldConfigArgument{
+								"input": &graphql.ArgumentConfig{Type: color},
+							},
+							Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+								return p.Args["input"], nil
+							},
+						},
+					},
+				}),
+			})
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			var wg sync.WaitGroup
+			wg.Add(2)
+			for i := 0; i < 2; i++ {
+				go func() {
+					defer wg.Done()
+					for j := 0; j < 100; j++ {
+						result := graphql.Do(graphql.Params{
+							Schema:        schema,
+							RequestString: "{ color(input: GREEN) }",
+						})
+						if len(result.Errors) > 0 {
+							fmt.Println(result.Errors[0])
+							os.Exit(1)
+						}
+					}
+				}()
+			}
+			wg.Wait()
+		}
+	`)
+}

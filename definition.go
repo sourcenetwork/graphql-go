@@ -1007,8 +1007,14 @@ func NewEnum(config EnumConfig) *Enum {
 
 	gt.PrivateName = config.Name
 	gt.PrivateDescription = config.Description
-	if gt.values, gt.err = gt.defineEnumValues(config.Values); gt.err != nil {
-		return gt
+	gt.values, gt.err = gt.defineEnumValues(config.Values)
+	// The lookups are built here so that requests sharing the schema only read
+	// them.
+	gt.valuesLookup = make(map[interface{}]*EnumValueDefinition, len(gt.values))
+	gt.nameLookup = make(map[string]*EnumValueDefinition, len(gt.values))
+	for _, value := range gt.values {
+		gt.valuesLookup[value.Value] = value
+		gt.nameLookup[value.Name] = value
 	}
 
 	return gt
@@ -1059,7 +1065,7 @@ func (gt *Enum) Serialize(value interface{}) interface{} {
 	} else if kind == reflect.Ptr {
 		v = reflect.Indirect(reflect.ValueOf(v)).Interface()
 	}
-	if enumValue, ok := gt.getValueLookup()[v]; ok {
+	if enumValue, ok := gt.valuesLookup[v]; ok {
 		return enumValue.Name
 	}
 	return nil
@@ -1075,14 +1081,14 @@ func (gt *Enum) ParseValue(value interface{}) interface{} {
 	default:
 		return nil
 	}
-	if enumValue, ok := gt.getNameLookup()[v]; ok {
+	if enumValue, ok := gt.nameLookup[v]; ok {
 		return enumValue.Value
 	}
 	return nil
 }
 func (gt *Enum) ParseLiteral(valueAST ast.Value) interface{} {
 	if valueAST, ok := valueAST.(*ast.EnumValue); ok {
-		if enumValue, ok := gt.getNameLookup()[valueAST.Value]; ok {
+		if enumValue, ok := gt.nameLookup[valueAST.Value]; ok {
 			return enumValue.Value
 		}
 	}
@@ -1099,29 +1105,6 @@ func (gt *Enum) String() string {
 }
 func (gt *Enum) Error() error {
 	return gt.err
-}
-func (gt *Enum) getValueLookup() map[interface{}]*EnumValueDefinition {
-	if len(gt.valuesLookup) > 0 {
-		return gt.valuesLookup
-	}
-	valuesLookup := map[interface{}]*EnumValueDefinition{}
-	for _, value := range gt.Values() {
-		valuesLookup[value.Value] = value
-	}
-	gt.valuesLookup = valuesLookup
-	return gt.valuesLookup
-}
-
-func (gt *Enum) getNameLookup() map[string]*EnumValueDefinition {
-	if len(gt.nameLookup) > 0 {
-		return gt.nameLookup
-	}
-	nameLookup := map[string]*EnumValueDefinition{}
-	for _, value := range gt.Values() {
-		nameLookup[value.Name] = value
-	}
-	gt.nameLookup = nameLookup
-	return gt.nameLookup
 }
 
 // InputObject Type Definition
