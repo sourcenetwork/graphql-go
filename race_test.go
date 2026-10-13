@@ -11,8 +11,7 @@ import (
 // runRaceProgram writes source to a temporary module-aware program, runs it
 // under the race detector with `go run -race` and fails the test if the
 // detector produces any output. Subprocessing keeps races detectable even when
-// the test binary itself is not run with `-race`, matching the prevailing CI
-// configuration at the time it was introduced.
+// the test binary itself is not run with `-race`.
 func runRaceProgram(t *testing.T, source string) {
 	t.Helper()
 
@@ -128,9 +127,9 @@ func TestRaceInputObjectFields(t *testing.T) {
 			// directive argument is never walked by the schema's typeMapReducer,
 			// so it stays uninitialized in the built schema and validation
 			// (ArgumentsOfCorrectTypeRule -> isValidLiteralValue -> Fields) has
-			// to initialise it lazily while other requests validate too. Note a
-			// separate instance from phase 1: config.Types would have eagerly
-			// initialised it during NewSchema.
+			// to initialise it lazily while other requests validate too. It is
+			// a separate instance because phase 1 already initialised
+			// inputObject.
 			directiveInputObject := graphql.NewInputObject(graphql.InputObjectConfig{
 				Name: "DirectiveFilter",
 				Fields: (graphql.InputObjectConfigFieldMapThunk)(func() (graphql.InputObjectConfigFieldMap, error) {

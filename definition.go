@@ -1138,7 +1138,10 @@ type InputObject struct {
 	// partially built field map or crash the runtime on concurrent map access.
 	// A mutex is used rather than sync.Once because AddFieldConfig must be able
 	// to rebuild the map, and a failed init must remain retryable (init is only
-	// set on success).
+	// set on success). Fields and AddFieldConfig hold the write lock while they
+	// run the fields thunk, and the lock is not reentrant, so a thunk must not
+	// call Fields, Error or AddFieldConfig on the same input object, directly
+	// or through a call such as Schema.AppendType that walks it.
 	fieldsMutex sync.RWMutex
 }
 type InputObjectFieldConfig struct {
@@ -1187,9 +1190,10 @@ func NewInputObject(config InputObjectConfig) *InputObject {
 	return gt
 }
 
-// defineFieldMap builds the field map from the configured fields and stores
-// the built state on gt. It mutates gt.fields, gt.err and gt.init, so callers
-// must hold gt.fieldsMutex.
+// defineFieldMap builds the field map from the configured fields and returns
+// it for the caller to store in gt.fields. It sets gt.err, and sets gt.init
+// only when the build succeeds, so callers must hold gt.fieldsMutex for
+// writing.
 func (gt *InputObject) defineFieldMap() InputObjectFieldMap {
 	var (
 		fieldMap InputObjectConfigFieldMap
@@ -1272,11 +1276,10 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 }
 
 func (gt *InputObject) Fields() InputObjectFieldMap {
-	// Fast path for the read-mostly steady state: the map is copied under the
-	// read lock so no write can interleave. gt.init is only ever written while
-	// holding the write lock, so a reader observing it as true also observes
-	// the completed map write ordered before it in the writer's critical
-	// section.
+	// Fast path once the map is built. Only the map reference is read under
+	// the read lock; callers then share the map itself without the lock, which
+	// is safe because a built map is never written (AddFieldConfig builds a
+	// new one).
 	gt.fieldsMutex.RLock()
 	if gt.init {
 		fields := gt.fields
