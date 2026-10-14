@@ -365,8 +365,8 @@ func typeMapReducer(schema *Schema, typeMap TypeMap, objectType Type) (TypeMap, 
 		}
 	case *InputObject:
 		fieldMap := objectType.Fields()
-		if objectType.err != nil {
-			return typeMap, objectType.err
+		if err = objectType.Error(); err != nil {
+			return typeMap, err
 		}
 		for _, field := range fieldMap {
 			typeMap, err = typeMapReducer(schema, typeMap, field.Type)

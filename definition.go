@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/sourcenetwork/graphql-go/language/ast"
 )
@@ -1006,8 +1007,14 @@ func NewEnum(config EnumConfig) *Enum {
 
 	gt.PrivateName = config.Name
 	gt.PrivateDescription = config.Description
-	if gt.values, gt.err = gt.defineEnumValues(config.Values); gt.err != nil {
-		return gt
+	gt.values, gt.err = gt.defineEnumValues(config.Values)
+	// The lookups are built here so that requests sharing the schema only read
+	// them.
+	gt.valuesLookup = make(map[interface{}]*EnumValueDefinition, len(gt.values))
+	gt.nameLookup = make(map[string]*EnumValueDefinition, len(gt.values))
+	for _, value := range gt.values {
+		gt.valuesLookup[value.Value] = value
+		gt.nameLookup[value.Name] = value
 	}
 
 	return gt
@@ -1058,7 +1065,7 @@ func (gt *Enum) Serialize(value interface{}) interface{} {
 	} else if kind == reflect.Ptr {
 		v = reflect.Indirect(reflect.ValueOf(v)).Interface()
 	}
-	if enumValue, ok := gt.getValueLookup()[v]; ok {
+	if enumValue, ok := gt.valuesLookup[v]; ok {
 		return enumValue.Name
 	}
 	return nil
@@ -1074,14 +1081,14 @@ func (gt *Enum) ParseValue(value interface{}) interface{} {
 	default:
 		return nil
 	}
-	if enumValue, ok := gt.getNameLookup()[v]; ok {
+	if enumValue, ok := gt.nameLookup[v]; ok {
 		return enumValue.Value
 	}
 	return nil
 }
 func (gt *Enum) ParseLiteral(valueAST ast.Value) interface{} {
 	if valueAST, ok := valueAST.(*ast.EnumValue); ok {
-		if enumValue, ok := gt.getNameLookup()[valueAST.Value]; ok {
+		if enumValue, ok := gt.nameLookup[valueAST.Value]; ok {
 			return enumValue.Value
 		}
 	}
@@ -1098,29 +1105,6 @@ func (gt *Enum) String() string {
 }
 func (gt *Enum) Error() error {
 	return gt.err
-}
-func (gt *Enum) getValueLookup() map[interface{}]*EnumValueDefinition {
-	if len(gt.valuesLookup) > 0 {
-		return gt.valuesLookup
-	}
-	valuesLookup := map[interface{}]*EnumValueDefinition{}
-	for _, value := range gt.Values() {
-		valuesLookup[value.Value] = value
-	}
-	gt.valuesLookup = valuesLookup
-	return gt.valuesLookup
-}
-
-func (gt *Enum) getNameLookup() map[string]*EnumValueDefinition {
-	if len(gt.nameLookup) > 0 {
-		return gt.nameLookup
-	}
-	nameLookup := map[string]*EnumValueDefinition{}
-	for _, value := range gt.Values() {
-		nameLookup[value.Name] = value
-	}
-	gt.nameLookup = nameLookup
-	return gt.nameLookup
 }
 
 // InputObject Type Definition
@@ -1148,6 +1132,17 @@ type InputObject struct {
 	fields     InputObjectFieldMap
 	init       bool
 	err        error
+
+	// fieldsMutex guards the lazily built state above: a shared schema can be
+	// read by concurrent requests, and an unsynchronised init could expose a
+	// partially built field map or crash the runtime on concurrent map access.
+	// A mutex is used rather than sync.Once because AddFieldConfig must be able
+	// to rebuild the map, and a failed init must remain retryable (init is only
+	// set on success). Fields and AddFieldConfig hold the write lock while they
+	// run the fields thunk, and the lock is not reentrant, so a thunk must not
+	// call Fields, Error or AddFieldConfig on the same input object, directly
+	// or through a call such as Schema.AppendType that walks it.
+	fieldsMutex sync.RWMutex
 }
 type InputObjectFieldConfig struct {
 	Type         Input       `json:"type"`
@@ -1195,6 +1190,10 @@ func NewInputObject(config InputObjectConfig) *InputObject {
 	return gt
 }
 
+// defineFieldMap builds the field map from the configured fields and returns
+// it for the caller to store in gt.fields. It sets gt.err, and sets gt.init
+// only when the build succeeds, so callers must hold gt.fieldsMutex for
+// writing.
 func (gt *InputObject) defineFieldMap() InputObjectFieldMap {
 	var (
 		fieldMap InputObjectConfigFieldMap
@@ -1248,6 +1247,11 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 		return
 	}
 
+	// Both the typeConfig.Fields mutation and the immediate rebuild below
+	// must be serialised against concurrent Fields() readers.
+	gt.fieldsMutex.Lock()
+	defer gt.fieldsMutex.Unlock()
+
 	switch fields := gt.typeConfig.Fields.(type) {
 	case InputObjectConfigFieldMap:
 		// If the fields were defined synchronously (not a thunk),
@@ -1272,6 +1276,20 @@ func (gt *InputObject) AddFieldConfig(fieldName string, fieldConfig *InputObject
 }
 
 func (gt *InputObject) Fields() InputObjectFieldMap {
+	// Fast path once the map is built. Only the map reference is read under
+	// the read lock; callers then share the map itself without the lock, which
+	// is safe because a built map is never written (AddFieldConfig builds a
+	// new one).
+	gt.fieldsMutex.RLock()
+	if gt.init {
+		fields := gt.fields
+		gt.fieldsMutex.RUnlock()
+		return fields
+	}
+	gt.fieldsMutex.RUnlock()
+
+	gt.fieldsMutex.Lock()
+	defer gt.fieldsMutex.Unlock()
 	if !gt.init {
 		gt.fields = gt.defineFieldMap()
 	}
@@ -1287,6 +1305,10 @@ func (gt *InputObject) String() string {
 	return gt.PrivateName
 }
 func (gt *InputObject) Error() error {
+	// gt.err is written by defineFieldMap while holding the write lock, so it
+	// must not be read unsynchronised while initialisation runs concurrently.
+	gt.fieldsMutex.RLock()
+	defer gt.fieldsMutex.RUnlock()
 	return gt.err
 }
 
